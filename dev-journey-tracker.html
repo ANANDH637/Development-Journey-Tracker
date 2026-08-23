@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Development Journey Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,500;0,8..60,600;1,8..60,400&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #10150F;
+    --bg-soft: #161C13;
+    --panel: #1B221A;
+    --panel-raised: #212B1E;
+    --line: #2C362A;
+    --text: #E9E6DA;
+    --text-dim: #A7AD9C;
+    --text-faint: #6E7568;
+    --moss: #85B96B;
+    --moss-dim: #5C7E4D;
+    --amber: #E7A24C;
+    --amber-dim: #B3803C;
+    --sky: #6FA6B0;
+    --berry: #C46A67;
+    --font-display: 'Space Grotesk', sans-serif;
+    --font-body: 'Source Serif 4', serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(133,185,107,0.07), transparent 40%),
+      radial-gradient(circle at 85% 30%, rgba(231,162,76,0.05), transparent 45%);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection{ background: var(--moss-dim); color: var(--bg); }
+
+  .wrap{
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 48px 24px 120px;
+  }
+
+  /* ---------- Header / Trailhead ---------- */
+  .trailhead{
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    background: var(--panel);
+    padding: 32px 32px 28px;
+    position: relative;
+    overflow: hidden;
+  }
+  .trailhead::before{
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: repeating-linear-gradient(90deg, var(--amber) 0 10px, transparent 10px 20px);
+    opacity: 0.6;
+  }
+  .eyebrow{
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin: 0 0 10px;
+  }
+  h1.title{
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: clamp(28px, 4vw, 38px);
+    letter-spacing: -0.01em;
+    margin: 0 0 8px;
+    color: var(--text);
+  }
+  .subtitle{
+    color: var(--text-dim);
+    font-size: 15.5px;
+    max-width: 52ch;
+    line-height: 1.55;
+    margin: 0 0 24px;
+  }
+
+  .stat-row{
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .stat{
+    background: var(--panel-raised);
+    padding: 14px 14px 12px;
+  }
+  .stat .num{
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--moss);
+    line-height: 1;
+  }
+  .stat .lbl{
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-top: 6px;
+  }
+
+  /* ---------- Controls ---------- */
+  .controls{
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    gap: 12px;
+    margin: 36px 0 6px;
+    flex-wrap: wrap;
+  }
+  .filters{
+    display:flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .chip{
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    background: transparent;
+    border: 1px solid var(--line);
+    padding: 6px 12px;
+    border-radius: 100px;
+    cursor: pointer;
+    transition: all .15s ease;
+  }
+  .chip:hover{ border-color: var(--moss-dim); color: var(--text); }
+  .chip.active{
+    background: var(--moss-dim);
+    border-color: var(--moss-dim);
+    color: #0D130A;
+    font-weight: 600;
+  }
+  .btn-add{
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 500;
+    background: var(--amber);
+    color: #241705;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: filter .15s ease, transform .1s ease;
+    white-space: nowrap;
+  }
+  .btn-add:hover{ filter: brightness(1.08); }
+  .btn-add:active{ transform: translateY(1px); }
+
+  /* ---------- Entry form ---------- */
+  .entry-form{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 22px;
+    margin: 18px 0 8px;
+    display: none;
+  }
+  .entry-form.open{ display: block; }
+  .form-row{ display:flex; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+  .form-field{ flex: 1; min-width: 180px; display:flex; flex-direction:column; gap:6px; }
+  .form-field label{
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-faint);
+  }
+  .form-field input, .form-field select, .form-field textarea{
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 14.5px;
+    padding: 9px 11px;
+    border-radius: 3px;
+    outline: none;
+  }
+  .form-field select{ font-family: var(--font-mono); font-size: 13px; }
+  .form-field input:focus, .form-field select:focus, .form-field textarea:focus{
+    border-color: var(--moss-dim);
+  }
+  .form-field textarea{ resize: vertical; min-height: 64px; font-family: var(--font-body); }
+  .form-actions{ display:flex; justify-content:flex-end; gap: 10px; margin-top: 6px; }
+  .btn-ghost{
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    background: transparent;
+    border: 1px solid var(--line);
+    color: var(--text-dim);
+    padding: 9px 14px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .btn-ghost:hover{ color: var(--text); border-color: var(--text-faint); }
+  .btn-submit{
+    font-family: var(--font-mono);
+    font-size: 12.5px;
+    font-weight: 600;
+    background: var(--moss);
+    border: none;
+    color: #0D130A;
+    padding: 9px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  .btn-submit:hover{ filter: brightness(1.08); }
+
+  /* ---------- Trail ---------- */
+  .trail{
+    position: relative;
+    margin-top: 28px;
+    min-height: 40px;
+  }
+  .trail svg{
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+  .trail-path{
+    fill: none;
+    stroke: var(--line);
+    stroke-width: 2;
+    stroke-dasharray: 1 10;
+    stroke-linecap: round;
+  }
+
+  .waypoint{
+    position: relative;
+    display: flex;
+    margin-bottom: 30px;
+    z-index: 1;
+  }
+  .waypoint.side-left .card{ margin-right: auto; }
+  .waypoint.side-right{ justify-content: flex-end; }
+  .waypoint.side-right .card{ margin-left: auto; }
+
+  .marker{
+    position: absolute;
+    left: 50%;
+    top: 22px;
+    transform: translate(-50%, -50%);
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--panel-raised);
+    border: 2px solid var(--moss-dim);
+    display:flex; align-items:center; justify-content:center;
+    z-index: 2;
+  }
+  .marker svg{ width: 16px; height: 16px; }
+  .waypoint[data-type="skill"] .marker{ border-color: var(--sky); }
+  .waypoint[data-type="project"] .marker{ border-color: var(--amber-dim); }
+  .waypoint[data-type="milestone"] .marker{ border-color: var(--moss); }
+  .waypoint[data-type="reflection"] .marker{ border-color: var(--berry); }
+
+  .card{
+    width: calc(50% - 46px);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 16px 18px;
+    min-width: 220px;
+  }
+  @media (max-width: 620px){
+    .card{ width: calc(100% - 60px); margin-left: 60px !important; }
+    .waypoint.side-right{ justify-content: flex-start; }
+    .marker{ left: 24px; }
+    .trail-path{ display: none; }
+  }
+
+  .card-top{ display:flex; align-items:baseline; justify-content: space-between; gap: 10px; margin-bottom: 6px; }
+  .card-date{ font-family: var(--font-mono); font-size: 11px; color: var(--text-faint); white-space: nowrap; }
+  .card-type{
+    font-family: var(--font-mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    padding: 2px 7px;
+    border-radius: 100px;
+    border: 1px solid var(--line);
+  }
+  .waypoint[data-type="skill"] .card-type{ color: var(--sky); border-color: var(--sky); }
+  .waypoint[data-type="project"] .card-type{ color: var(--amber); border-color: var(--amber-dim); }
+  .waypoint[data-type="milestone"] .card-type{ color: var(--moss); border-color: var(--moss-dim); }
+  .waypoint[data-type="reflection"] .card-type{ color: var(--berry); border-color: var(--berry); }
+
+  .card h3{
+    font-family: var(--font-display);
+    font-size: 16.5px;
+    font-weight: 600;
+    margin: 0 0 6px;
+    color: var(--text);
+  }
+  .card p{
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--text-dim);
+    margin: 0 0 10px;
+  }
+  .tag-row{ display:flex; gap: 6px; flex-wrap: wrap; }
+  .tag{
+    font-family: var(--font-mono);
+    font-size: 10.5px;
+    color: var(--text-faint);
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    padding: 2px 8px;
+    border-radius: 3px;
+  }
+  .card-del{
+    background: none; border: none; cursor: pointer;
+    color: var(--text-faint); font-size: 13px;
+    padding: 0; margin-left: 8px;
+  }
+  .card-del:hover{ color: var(--berry); }
+
+  /* ---------- Empty state ---------- */
+  .empty{
+    text-align: center;
+    padding: 50px 20px;
+    border: 1px dashed var(--line);
+    border-radius: 4px;
+    color: var(--text-faint);
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+  .empty .big{ font-family: var(--font-display); color: var(--text-dim); font-size: 16px; margin-bottom: 6px; }
+
+  .foot-note{
+    text-align:center;
+    margin-top: 40px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-faint);
+  }
+  .foot-note button{
+    background:none; border:none; color: var(--text-faint);
+    text-decoration: underline; cursor:pointer; font-family: var(--font-mono); font-size: 11px;
+  }
+  .foot-note button:hover{ color: var(--berry); }
+
+  @media (prefers-reduced-motion: no-preference){
+    .waypoint{ animation: rise .4s ease both; }
+  }
+  @keyframes rise{
+    from{ opacity: 0; transform: translateY(8px); }
+    to{ opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="trailhead">
+    <p class="eyebrow">// dev journey tracker</p>
+    <h1 class="title">Trail Log</h1>
+    <p class="subtitle">Every skill picked up, project shipped, and milestone crossed — laid out as waypoints on the path you've walked so far.</p>
+    <div class="stat-row">
+      <div class="stat"><div class="num" id="stat-total">0</div><div class="lbl">Waypoints</div></div>
+      <div class="stat"><div class="num" id="stat-skills">0</div><div class="lbl">Skills</div></div>
+      <div class="stat"><div class="num" id="stat-projects">0</div><div class="lbl">Projects</div></div>
+      <div class="stat"><div class="num" id="stat-streak">0</div><div class="lbl">Day streak</div></div>
+    </div>
+  </header>
+
+  <div class="controls">
+    <div class="filters" id="filters">
+      <button class="chip active" data-filter="all">All</button>
+      <button class="chip" data-filter="skill">Skill</button>
+      <button class="chip" data-filter="project">Project</button>
+      <button class="chip" data-filter="milestone">Milestone</button>
+      <button class="chip" data-filter="reflection">Reflection</button>
+    </div>
+    <button class="btn-add" id="toggle-form">+ Log a waypoint</button>
+  </div>
+
+  <form class="entry-form" id="entry-form">
+    <div class="form-row">
+      <div class="form-field" style="flex: 2;">
+        <label for="f-title">What happened</label>
+        <input type="text" id="f-title" placeholder="e.g. Shipped the auth flow" required>
+      </div>
+      <div class="form-field" style="max-width: 160px;">
+        <label for="f-type">Type</label>
+        <select id="f-type">
+          <option value="skill">Skill</option>
+          <option value="project">Project</option>
+          <option value="milestone">Milestone</option>
+          <option value="reflection">Reflection</option>
+        </select>
+      </div>
+      <div class="form-field" style="max-width: 160px;">
+        <label for="f-date">Date</label>
+        <input type="date" id="f-date">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label for="f-desc">Notes</label>
+        <textarea id="f-desc" placeholder="A sentence or two on what you did or learned…"></textarea>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label for="f-tags">Tags (comma separated)</label>
+        <input type="text" id="f-tags" placeholder="react, api, debugging">
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="button" class="btn-ghost" id="cancel-form">Cancel</button>
+      <button type="submit" class="btn-submit">Add to trail</button>
+    </div>
+  </form>
+
+  <div class="trail" id="trail">
+    <svg id="trail-svg"><path class="trail-path" id="trail-path" d=""/></svg>
+  </div>
+
+  <div class="foot-note">Stored privately in your browser session for this artifact · <button id="reset-btn">clear all entries</button></div>
+
+</div>
+
+<script>
+(function(){
+  const STORAGE_KEY = 'journey-entries';
+  let entries = [];
+  let activeFilter = 'all';
+
+  const icons = {
+    skill: '<svg viewBox="0 0 24 24" fill="none" stroke="#6FA6B0" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7l2.5 3.5L18 12l-3.5 1.5L12 17l-1.5-3.5L7 12l3.5-1.5L12 7z"/></svg>',
+    project: '<svg viewBox="0 0 24 24" fill="none" stroke="#E7A24C" stroke-width="2"><path d="M5 21V4"/><path d="M5 4h11l-2 4 2 4H5"/></svg>',
+    milestone: '<svg viewBox="0 0 24 24" fill="none" stroke="#85B96B" stroke-width="2"><path d="M3 20l6-11 4 6 3-5 5 10H3z"/></svg>',
+    reflection: '<svg viewBox="0 0 24 24" fill="none" stroke="#C46A67" stroke-width="2"><path d="M4 19V6a2 2 0 0 1 2-2h12v13H6a2 2 0 0 0-2 2zm0 0a2 2 0 0 0 2 2h12"/></svg>'
+  };
+
+  const trailEl = document.getElementById('trail');
+  const form = document.getElementById('entry-form');
+  const toggleBtn = document.getElementById('toggle-form');
+  const cancelBtn = document.getElementById('cancel-form');
+
+  document.getElementById('f-date').valueAsDate = new Date();
+
+  toggleBtn.addEventListener('click', () => {
+    form.classList.toggle('open');
+    if(form.classList.contains('open')) document.getElementById('f-title').focus();
+  });
+  cancelBtn.addEventListener('click', () => form.classList.remove('open'));
+
+  document.getElementById('filters').addEventListener('click', (e) => {
+    const btn = e.target.closest('.chip');
+    if(!btn) return;
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.dataset.filter;
+    render();
+  });
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const title = document.getElementById('f-title').value.trim();
+    if(!title) return;
+    const entry = {
+      id: 'e_' + Date.now() + '_' + Math.random().toString(36).slice(2,7),
+      title,
+      type: document.getElementById('f-type').value,
+      date: document.getElementById('f-date').value || new Date().toISOString().slice(0,10),
+      desc: document.getElementById('f-desc').value.trim(),
+      tags: document.getElementById('f-tags').value.split(',').map(t => t.trim()).filter(Boolean)
+    };
+    entries.push(entry);
+    await save();
+    form.reset();
+    document.getElementById('f-date').valueAsDate = new Date();
+    form.classList.remove('open');
+    render();
+  });
+
+  const resetBtn = document.getElementById('reset-btn');
+  let resetArmed = false;
+  let resetTimer = null;
+  resetBtn.addEventListener('click', async () => {
+    if(!resetArmed){
+      resetArmed = true;
+      resetBtn.textContent = 'click again to confirm';
+      resetTimer = setTimeout(() => {
+        resetArmed = false;
+        resetBtn.textContent = 'clear all entries';
+      }, 3000);
+      return;
+    }
+    clearTimeout(resetTimer);
+    resetArmed = false;
+    resetBtn.textContent = 'clear all entries';
+    entries = [];
+    await save();
+    render();
+  });
+
+  async function load(){
+    try{
+      const result = await window.storage.get(STORAGE_KEY, false);
+      entries = result && result.value ? JSON.parse(result.value) : [];
+    }catch(err){
+      entries = [];
+    }
+  }
+
+  async function save(){
+    try{
+      await window.storage.set(STORAGE_KEY, JSON.stringify(entries), false);
+    }catch(err){
+      console.error('Storage error:', err);
+    }
+  }
+
+  function daysAgo(dateStr){
+    const d = new Date(dateStr + 'T00:00:00');
+    const today = new Date();
+    today.setHours(0,0,0,0);
+    return Math.round((today - d) / 86400000);
+  }
+
+  function computeStreak(sorted){
+    if(sorted.length === 0) return 0;
+    const uniqueDays = [...new Set(sorted.map(e => e.date))].sort((a,b) => new Date(b) - new Date(a));
+    let streak = 0;
+    let cursor = new Date();
+    cursor.setHours(0,0,0,0);
+    for(const day of uniqueDays){
+      const d = new Date(day + 'T00:00:00');
+      const diff = Math.round((cursor - d) / 86400000);
+      if(diff === 0 || diff === 1){
+        streak++;
+        cursor = d;
+      } else if(diff > 1){
+        break;
+      }
+    }
+    return streak;
+  }
+
+  function renderStats(sorted){
+    document.getElementById('stat-total').textContent = entries.length;
+    document.getElementById('stat-skills').textContent = entries.filter(e => e.type === 'skill').length;
+    document.getElementById('stat-projects').textContent = entries.filter(e => e.type === 'project').length;
+    document.getElementById('stat-streak').textContent = computeStreak(sorted);
+  }
+
+  function drawPath(){
+    const svgEl = trailEl.querySelector('#trail-svg');
+    const svgPath = trailEl.querySelector('#trail-path');
+    if(!svgEl || !svgPath) return;
+    const markers = trailEl.querySelectorAll('.marker');
+    if(markers.length < 2){ svgPath.setAttribute('d', ''); return; }
+    const trailRect = trailEl.getBoundingClientRect();
+    svgEl.setAttribute('width', trailRect.width);
+    svgEl.setAttribute('height', trailRect.height);
+    const pts = Array.from(markers).map(m => {
+      const r = m.getBoundingClientRect();
+      return { x: r.left + r.width/2 - trailRect.left, y: r.top + r.height/2 - trailRect.top };
+    });
+    let d = `M ${pts[0].x} ${pts[0].y}`;
+    for(let i = 1; i < pts.length; i++){
+      const midY = (pts[i-1].y + pts[i].y) / 2;
+      d += ` C ${pts[i-1].x} ${midY}, ${pts[i].x} ${midY}, ${pts[i].x} ${pts[i].y}`;
+    }
+    svgPath.setAttribute('d', d);
+  }
+
+  function render(){
+    const sorted = [...entries].sort((a,b) => new Date(a.date) - new Date(b.date));
+    renderStats(sorted);
+
+    const filtered = activeFilter === 'all' ? sorted : sorted.filter(e => e.type === activeFilter);
+
+    trailEl.innerHTML = '<svg id="trail-svg"><path class="trail-path" id="trail-path" d=""/></svg>';
+
+    if(entries.length === 0){
+      const empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.innerHTML = '<div class="big">The trail starts here</div>Log your first skill, project, or milestone to begin.';
+      trailEl.appendChild(empty);
+      return;
+    }
+    if(filtered.length === 0){
+      const empty = document.createElement('div');
+      empty.className = 'empty';
+      empty.innerHTML = '<div class="big">No waypoints of this type yet</div>Try a different filter, or log a new one.';
+      trailEl.appendChild(empty);
+      return;
+    }
+
+    filtered.forEach((entry, i) => {
+      const side = i % 2 === 0 ? 'side-left' : 'side-right';
+      const wp = document.createElement('div');
+      wp.className = 'waypoint ' + side;
+      wp.dataset.type = entry.type;
+      const dAgo = daysAgo(entry.date);
+      const dLabel = dAgo === 0 ? 'today' : dAgo === 1 ? 'yesterday' : dAgo + 'd ago';
+      wp.innerHTML = `
+        <div class="marker">${icons[entry.type] || icons.skill}</div>
+        <div class="card">
+          <div class="card-top">
+            <span class="card-type">${entry.type}</span>
+            <span class="card-date">${entry.date} · ${dLabel}</span>
+          </div>
+          <h3>${escapeHtml(entry.title)} <button class="card-del" title="Remove" data-id="${entry.id}">✕</button></h3>
+          ${entry.desc ? `<p>${escapeHtml(entry.desc)}</p>` : ''}
+          ${entry.tags && entry.tags.length ? `<div class="tag-row">${entry.tags.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('')}</div>` : ''}
+        </div>
+      `;
+      trailEl.appendChild(wp);
+    });
+
+    trailEl.querySelectorAll('.card-del').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        entries = entries.filter(e => e.id !== btn.dataset.id);
+        await save();
+        render();
+      });
+    });
+
+    requestAnimationFrame(drawPath);
+  }
+
+  function escapeHtml(str){
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  window.addEventListener('resize', () => requestAnimationFrame(drawPath));
+
+  (async function init(){
+    trailEl.innerHTML = '<div class="empty">Loading your trail…</div>';
+    await load();
+    render();
+  })();
+})();
+</script>
+</body>
+</html>
